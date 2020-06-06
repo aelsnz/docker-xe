@@ -75,6 +75,7 @@ sqlplus / as sysdba << EOF
   exec dbms_xdb_config.setglobalportenabled(true);
   exit
 EOF
+echo ".. Done"
 }
 ###################
 ###################
@@ -115,6 +116,7 @@ case ${v_option} in
  "start")
           sudo /etc/init.d/oracle-xe-18c start
           enableDBExpress
+          echo "Database ready for use..."
           tail -F -n 0 /opt/oracle/diag/rdbms/xe/XE/trace/alert_XE.log
           ;;
  "stop")
