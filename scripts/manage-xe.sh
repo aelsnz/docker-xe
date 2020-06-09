@@ -105,7 +105,7 @@ do
    shift
 done
 
-setup_parameters ${db}
+setup_parameters 
 
 ######
 ######
