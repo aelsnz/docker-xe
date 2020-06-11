@@ -1,4 +1,3 @@
-##
 #  Description:
 #  This is a basic Dockerfile that can be used to build an Oracle XE database.
 #  You have to download the Oracle XE software rpm and place it in the software sub folder.
@@ -10,7 +9,7 @@
 #  First we select our base image we will use to build from.
 #  in this case we will use Oracle Linux 7.8 
 #
-FROM oraclelinux:7.8
+FROM oraclelinux:7.6
 
 MAINTAINER anton.els@aelsnz.com
 
@@ -22,12 +21,14 @@ USER root
 ##
 #  First we add the “oracle”  Unix user and groups and assign a password to the user
 #  note - you will have to make this password more complex in production configurations
+#  The password set is sample here, you can use encrypted password with chpasswd -e 
+#  but ideally should not set password in dockerfile - on the todo list to update.
 #
 RUN groupadd -g 501 oinstall \
   && groupadd -g 502 dba \
   && groupadd -g 503 oper \
   && useradd -m -g oinstall -G oinstall,dba,oper -u 501 oracle \
-  && echo 'oracle:Demo123!' | chpasswd 
+  && echo 'oracle:Demo123' | chpasswd 
 
 ## 
 #  As Pre-requisite for the Oracle 18c XE Install
@@ -124,7 +125,7 @@ ENV ORACLE_DOCKER_INSTALL=true \
 #    Just modify -sid XE to example -sid XYZ    
 #
 RUN netca /orahome $ORACLE_HOME /instype typical /inscomp client,oraclenet,javavm,server,ano /insprtcl tcp /cfg local /authadp NO_VALUE /responseFile $ORACLE_HOME/network/install/netca_typ.rsp /silent /listenerparameters DEFAULT_SERVICE=XE  /lisport 1521 \
-  && dbca -silent -createDatabase -gdbName XE \
+ && dbca -silent -createDatabase -gdbName XE \
   -templateName XE_Database.dbc \
   -createAsContainerDatabase false \
   -sid XE \
@@ -132,7 +133,7 @@ RUN netca /orahome $ORACLE_HOME /instype typical /inscomp client,oraclenet,javav
   -emExpressPort 5500 \
   -J-Doracle.assistants.dbca.validate.DBCredentials=false \
   -sampleSchema false \
-  -initParams sga_target=600M,pga_aggregate_target=50M \
+  -initParams sga_target=1024M,pga_aggregate_target=100M \
   -storageType FS \
   -datafileDestination /opt/oracle/oradata \
   -useOMF true \
