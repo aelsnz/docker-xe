@@ -49,7 +49,10 @@ setup_parameters ()
 {
   ## Set Other ENV
   set_env XE
-  TNS_ADMIN=${ORACLE_HOME}/network/admin
+  # note 21c you now have the orabasehome which is located outside the oracle home
+  # see orabasehome command.
+  ORACLE_BASE_HOME=`orabasehome`
+  TNS_ADMIN=${ORACLE_BASE_HOME}/network/admin
   EDITOR=vi
   NLS_DATE_FORMAT="dd/mm/yyyy:hh24:mi:ss"
 
@@ -65,7 +68,9 @@ setup_parameters ()
   echo $HOSTNAME - $(echo $(ip addr show dev eth0 | sed -nr 's/.*inet ([^ ]+).*/\1/p') | cut -f 1 -d '/')
 }
 
-
+####################################
+#  Function to enable DB Express
+####################################
 enableDBExpress ()
 {
 set_env XE
@@ -77,6 +82,41 @@ sqlplus / as sysdba << EOF
 EOF
 echo ".. Done"
 }
+
+
+####################################
+#  Function to eanble supplemental logging
+####################################
+enableSupplementalLogData ()
+{
+set_env XE
+echo "Enable supplemental log data..."
+sqlplus / as sysdba << EOF
+  alter database add supplemental log data;
+  shutdown immediate;
+  startup;
+EOF
+echo ".. Done"
+}
+
+####################################
+#  Function to enable archivelog mode
+####################################
+enableArchiveLog ()
+{
+set_env XE
+echo "Enable archivelog mode..."
+sqlplus / as sysdba << EOF
+  shutdown immediate;
+  startup mount;
+  alter database archivelog;
+  shutdown immediate;
+  startup;
+EOF
+echo ".. Done"
+}
+
+
 ###################
 ###################
 ## Main
@@ -96,6 +136,10 @@ do
            shift
            v_option=${1}
            ;;
+   -s)     enable_supplemental_log="Y"
+           ;;
+   -a)     enable_archivelog="Y"
+           ;;
    -h)
            usage
            ;;
@@ -114,13 +158,22 @@ setup_parameters
 
 case ${v_option} in
  "start")
-          sudo /etc/init.d/oracle-xe-18c start
+          sudo /etc/init.d/oracle-xe-21c start
           enableDBExpress
           echo "Database ready for use..."
+          
+          if [ "${enable_supplemental_log}" = "Y" ]; then
+             enableSupplementalLogData
+          fi
+
+          if [ "${enable_archivelog}" = "Y" ]; then
+             enableArchiveLog
+          fi
+
           tail -F -n 0 /opt/oracle/diag/rdbms/xe/XE/trace/alert_XE.log
           ;;
  "stop")
-          sudo /etc/init.d/oracle-xe-18c stop
+          sudo /etc/init.d/oracle-xe-21c stop
           tail -50 /opt/oracle/diag/rdbms/xe/XE/trace/alert_XE.log
           ;;
 esac
