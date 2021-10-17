@@ -1,2 +1,4 @@
 software/oracle-database-preinstall-*.rpm
 software/oracle-database-xe-18c*.rpm
+software/oracle-database-xe-21c*.rpm
+.DS_Store
